@@ -1,0 +1,21 @@
+version: 0.2
+env:
+  shell: bash
+phases:
+  install:
+    runtime-versions:
+      python: 3.9
+    commands:
+      - pip install aws-sam-cli
+      - curl https://sh.rustup.rs -sSf | sh -s -- -y
+      - export PATH="${HOME}/.cargo/bin:${PATH}"
+      - pip3 install cargo-lambda
+      - yum install -y yum-utils
+      - yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+      - yum -y install terraform
+
+  build:
+    commands:
+      - terraform init
+      - terraform plan
+      - terraform apply -auto-approve

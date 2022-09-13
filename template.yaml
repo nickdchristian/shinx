@@ -1,0 +1,64 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "Template for creating S3 bucket and DynamoDB table to hold Terraform\
+  \ state and locks \nValidate: aws cloudformation validate-template --template-body\
+  \ file://template.yaml \nDeploy: aws cloudformation create-stack --region us-east-1\
+  \ --stack-name shinx-terraform-state --enable-termination-protection --template-body\
+  \ file://template.yaml --parameters ParameterKey=ResourcePrefix,ParameterValue=shinx-state\n"
+Outputs:
+  Bucket:
+    Description: Terraform state bucket name
+    Value: !Ref 'Bucket'
+  Table:
+    Description: Terraform state table name
+    Value: !Ref 'Table'
+Parameters:
+  ResourcePrefix:
+    Default: terraform-state
+    Description: A prefix for resources, account id will be added to ensure global
+      uniqueness
+    Type: String
+Resources:
+  Bucket:
+    Properties:
+      AccessControl: Private
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: !Sub '${ResourcePrefix}-${AWS::Region}-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      VersioningConfiguration:
+        Status: Enabled
+    Type: AWS::S3::Bucket
+  BucketPolicy:
+    DependsOn:
+      - Bucket
+    Properties:
+      Bucket: !Ref 'Bucket'
+      PolicyDocument:
+        Statement:
+          - Action: s3:DeleteObject
+            Effect: Deny
+            Principal: '*'
+            Resource: !Sub '${Bucket.Arn}/*'
+            Sid: DenyDelete
+    Type: AWS::S3::BucketPolicy
+  Table:
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: LockID
+          AttributeType: S
+      KeySchema:
+        - AttributeName: LockID
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      SSESpecification:
+        SSEEnabled: true
+      TableName: !Sub '${ResourcePrefix}-${AWS::Region}-${AWS::AccountId}'
+    Type: AWS::DynamoDB::Table
