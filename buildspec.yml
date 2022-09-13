@@ -2,11 +2,14 @@ version: 0.2
 env:
   shell: bash
 phases:
+  pre_build:
+    commands:
+      - export BUCKET=$(aws cloudformation --region us-east-1 describe-stacks --stack-name shinx-terraform-state --query "Stacks[0].Outputs[?OutputKey=='Bucket'].OutputValue" --output text)
+      - export TABLE=$(aws cloudformation --region us-east-1 describe-stacks --stack-name shinx-terraform-state --query "Stacks[0].Outputs[?OutputKey=='Table'].OutputValue" --output text)
   install:
     runtime-versions:
       python: 3.9
     commands:
-      - pip install aws-sam-cli
       - curl https://sh.rustup.rs -sSf | sh -s -- -y
       - export PATH="${HOME}/.cargo/bin:${PATH}"
       - pip3 install cargo-lambda
@@ -16,6 +19,6 @@ phases:
 
   build:
     commands:
-      - terraform init
-      - terraform plan
-      - terraform apply -auto-approve
+      - terraform init -backend-config="bucket=${BUCKET}" -backend-config="dynamodb_table=${TABLE}" -backend-config="encrypt=true" -backend-config="key=terraform.tfstate" -backend-config="region=us-east-1" -backend=true -force-copy -input=false
+      - terraform plan -var 'environment=dev' -var 'application_name=shinx'
+      - terraform apply -auto-approve -var 'environment=dev' -var 'application_name=shinx'
