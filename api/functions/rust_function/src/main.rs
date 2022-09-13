@@ -1,13 +1,33 @@
-use lambda_runtime::{handler_fn, Context, Error};
-use serde_json::{json, Value};
+use lambda_runtime::{service_fn, Error, LambdaEvent};
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize)]
+struct Request {
+}
+
+#[derive(Serialize)]
+struct Response {
+    req_id: String,
+    msg: String,
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
-    let func = handler_fn(func);
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .without_time()
+        .init();
+
+    let func = service_fn(handler);
     lambda_runtime::run(func).await?;
     Ok(())
 }
 
-async fn func(event: Value, _: Context) -> Result<Value, Error> {
-    Ok(json!({ "message": "Hello World!" }))
+pub(crate) async fn handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
+    let resp = Response {
+        req_id: event.context.request_id,
+        msg: format!("Chris is a cunt"),
+    };
+
+    Ok(resp)
 }

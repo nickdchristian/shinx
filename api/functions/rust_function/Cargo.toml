@@ -2,12 +2,15 @@
 name = "my_lambda_function"
 version = "0.1.0"
 autobins = false
+edition = "2021"
 
 [dependencies]
 lambda_runtime = "*"
 lambda_http = "*"
-serde_json = "*"
+serde = "*"
 tokio = "*"
+tracing = { version = "*", features = ["log"] }
+tracing-subscriber = { version = "*", default-features = false, features = ["fmt"] }
 
 [[bin]]
 name = "bootstrap"
