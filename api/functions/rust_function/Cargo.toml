@@ -1,0 +1,14 @@
+[package]
+name = "my_lambda_function"
+version = "0.1.0"
+autobins = false
+
+[dependencies]
+lambda_runtime = "*"
+lambda_http = "*"
+serde_json = "*"
+tokio = "*"
+
+[[bin]]
+name = "bootstrap"
+path = "src/main.rs"
