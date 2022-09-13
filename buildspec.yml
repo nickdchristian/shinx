@@ -16,9 +16,11 @@ phases:
       - yum install -y yum-utils
       - yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
       - yum -y install terraform
+      - yum install -y tree
 
   build:
     commands:
       - terraform init -backend-config="bucket=${BUCKET}" -backend-config="dynamodb_table=${TABLE}" -backend-config="encrypt=true" -backend-config="key=terraform.tfstate" -backend-config="region=us-east-1" -backend=true -force-copy -input=false
       - terraform plan -var 'environment=dev' -var 'application_name=shinx'
       - terraform apply -auto-approve -var 'environment=dev' -var 'application_name=shinx'
+      - tree
