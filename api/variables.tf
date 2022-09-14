@@ -1,5 +1,4 @@
 variable "application_name" {
-  default     = "dryterraformapp"
   description = "Name of the application"
   type        = string
 }

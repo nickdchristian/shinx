@@ -1,33 +1,21 @@
-use lambda_runtime::{service_fn, Error, LambdaEvent};
-use serde::{Deserialize, Serialize};
+use lambda_http::{run, service_fn, Body, Error, Request, RequestExt, Response};
 
-#[derive(Deserialize)]
-struct Request {
-}
-
-#[derive(Serialize)]
-struct Response {
-    req_id: String,
-    msg: String,
+async fn function_handler(event: Request) -> Result<Response<Body>, Error> {
+    let resp = Response::builder()
+        .status(200)
+        .header("content-type", "text/html")
+        .body("Hello cunts".into())
+        .map_err(Box::new)?;
+    Ok(resp)
 }
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
+        .with_target(false)
         .without_time()
         .init();
 
-    let func = service_fn(handler);
-    lambda_runtime::run(func).await?;
-    Ok(())
-}
-
-pub(crate) async fn handler(event: LambdaEvent<Request>) -> Result<Response, Error> {
-    let resp = Response {
-        req_id: event.context.request_id,
-        msg: format!("Chris is a cunt"),
-    };
-
-    Ok(resp)
+    run(service_fn(function_handler)).await
 }

@@ -31,12 +31,15 @@ resource "random_id" "this" {
   byte_length = 8
 }
 resource "aws_lambda_function" "this" {
+  architectures     = ["arm64"]
+  filename         = data.archive_file.this.output_path
   function_name    = "${var.application_name}-${var.api_resource_name}-${var.environment}-${random_id.this.hex}"
   role             = aws_iam_role.this.arn
   handler          = "bootstrap"
+  source_code_hash = data.archive_file.this.output_base64sha256
   publish          = true
 
-  runtime = "provided"
+  runtime = "provided.al2"
 }
 
 resource "aws_lambda_alias" "this" {
@@ -105,15 +108,30 @@ resource "aws_cloudwatch_metric_alarm" "throttle_count" {
 }
 
 resource "null_resource" "build" {
-
- provisioner "local-exec" {
-
+  triggers = {
+      index = filesha256("${path.module}/../functions/${var.api_resource_name}/src/main.rs")
+    }
+  provisioner "local-exec" {
     command = "/bin/bash ${path.module}/build.sh"
 
-   environment = {
+    environment = {
       function_path = "${path.module}/../functions/${var.api_resource_name}/"
     }
+
   }
+}
+
+data "null_data_source" "build" {
+  inputs = {
+    build_id   = "${null_resource.build.id}"
+    source_file = "${path.module}/../functions/${var.api_resource_name}/target/lambda/function/bootstrap"
+  }
+}
+
+data "archive_file" "this" {
+  output_path = "${path.module}/files/${var.api_resource_name}.zip"
+  source_file  = "${data.null_data_source.build.outputs["source_file"]}"
+  type        = "zip"
 }
 
 resource "aws_iam_role" "this" {

@@ -1,17 +1,11 @@
 [package]
-name = "my_lambda_function"
+name = "function"
 version = "0.1.0"
-autobins = false
 edition = "2021"
 
 [dependencies]
-lambda_runtime = "*"
-lambda_http = "*"
-serde = "*"
-tokio = "*"
-tracing = { version = "*", features = ["log"] }
-tracing-subscriber = { version = "*", default-features = false, features = ["fmt"] }
-
-[[bin]]
-name = "bootstrap"
-path = "src/main.rs"
+lambda_http = { version = "0.6.0", default-features = false, features = ["apigw_rest"] }
+lambda_runtime = "0.6.0"
+tokio = { version = "1", features = ["macros"] }
+tracing = { version = "0.1", features = ["log"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
