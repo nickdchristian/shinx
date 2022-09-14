@@ -31,11 +31,9 @@ resource "random_id" "this" {
   byte_length = 8
 }
 resource "aws_lambda_function" "this" {
-  filename         = data.archive_file.this.output_path
   function_name    = "${var.application_name}-${var.api_resource_name}-${var.environment}-${random_id.this.hex}"
   role             = aws_iam_role.this.arn
   handler          = "bootstrap"
-  source_code_hash = data.archive_file.this.output_base64sha256
   publish          = true
 
   runtime = "provided"
@@ -116,13 +114,6 @@ resource "null_resource" "build" {
       function_path = "${path.module}/../functions/${var.api_resource_name}/"
     }
   }
-}
-
-data "archive_file" "this" {
-  depends_on = [null_resource.build]
-  type        = "zip"
-  source_dir  = "${path.module}/../functions/${var.api_resource_name}/target/x86_64-unknown-linux-musl/release/bootstrap"
-  output_path = "${path.module}/files/${var.api_resource_name}.zip"
 }
 
 resource "aws_iam_role" "this" {
